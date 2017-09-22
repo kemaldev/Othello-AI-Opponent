@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Board {
@@ -15,10 +16,15 @@ public class Board {
         // 1 = 'X', 2 = 'O' , 0 = Empty square
         boardSquares = new int[4][4];
 
-        boardSquares[1][1] = 2;
-        boardSquares[1][2] = 1;
-        boardSquares[2][1] = 1;
-        boardSquares[2][2] = 2;
+
+        boardSquares[0][3] = 1;
+        boardSquares[3][2] = 1;
+        boardSquares[1][2] = 2;
+        boardSquares[2][1] = 2;
+        boardSquares[3][1] = 2;
+
+
+
 
         //Setting up all of the board-squares positions.
         boardSquarePositions = new int[4][4];
@@ -42,30 +48,30 @@ public class Board {
         boardView = new StringBuilder();
         boardView.append(
                 "---------------------------------------------\n" +
-                "|          |          |          |          |\n" +
-                "|          |          |          |          |\n" +
-                "|          |          |          |          |\n" +
-                "---------------------------------------------\n" +
-                "|          |          |          |          |\n" +
-                "|          |          |          |          |\n" +
-                "|          |          |          |          |\n" +
-                "---------------------------------------------\n" +
-                "|          |          |          |          |\n" +
-                "|          |          |          |          |\n" +
-                "|          |          |          |          |\n" +
-                "---------------------------------------------\n" +
-                "|          |          |          |          |\n" +
-                "|          |          |          |          |\n" +
-                "|          |          |          |          |\n" +
-                "---------------------------------------------");
+                        "|          |          |          |          |\n" +
+                        "|          |          |          |          |\n" +
+                        "|          |          |          |          |\n" +
+                        "---------------------------------------------\n" +
+                        "|          |          |          |          |\n" +
+                        "|          |          |          |          |\n" +
+                        "|          |          |          |          |\n" +
+                        "---------------------------------------------\n" +
+                        "|          |          |          |          |\n" +
+                        "|          |          |          |          |\n" +
+                        "|          |          |          |          |\n" +
+                        "---------------------------------------------\n" +
+                        "|          |          |          |          |\n" +
+                        "|          |          |          |          |\n" +
+                        "|          |          |          |          |\n" +
+                        "---------------------------------------------");
     }
 
     public void printBoard() {
-        for(int i = 0; i < boardSquares.length; i++) {
-            for(int j = 0; j < boardSquares[i].length; j++) {
-                if(boardSquares[i][j] == 1) {
+        for (int i = 0; i < boardSquares.length; i++) {
+            for (int j = 0; j < boardSquares[i].length; j++) {
+                if (boardSquares[i][j] == 1) {
                     boardView.setCharAt(boardSquarePositions[i][j], 'X');
-                } else if(boardSquares[i][j] == 2) {
+                } else if (boardSquares[i][j] == 2) {
                     boardView.setCharAt(boardSquarePositions[i][j], 'O');
                 }
             }
@@ -80,190 +86,280 @@ public class Board {
         String[] rowAndColumn = rowAndColumnText.split(",");
         int row = Integer.parseInt(rowAndColumn[0]);
         int column = Integer.parseInt(rowAndColumn[1]);
-        if(!validMove(row, column, 1)) {
+        if (!validMove(row, column, 1)) {
             System.out.println("Sorry but that move is not allowed, try again!");
             makeMove();
         } else {
             boardSquares[row][column] = 1;
         }
-
-        flipCheckers(row, column);
     }
 
-    public void flipCheckers(int row, int col) {
-
+    public void flipCheckers(ArrayList<int[]> rowsAndCols, int player) {
+        for(int[] position : rowsAndCols) {
+            boardSquares[position[0]][position[1]] = player;
+        }
     }
 
     public boolean validMove(int row, int col, int player) {
         //If the spot has already been occupied.
-        if(boardSquares[row][col] != 0) {
+        if (boardSquares[row][col] != 0) {
             return false;
         }
 
-        //If we're checking player X's move.
-        if(player == 1){
-            boolean adjacentFound;
-            int currRow;
-            int currCol;
+        ArrayList<int[]> piecesToFlip = new ArrayList<>();
+        boolean adjacentFound;
+        boolean validMove = false;
+        int currRow;
+        int currCol;
 
-            //For each direction search if there's opponent-pieces in between the move and earlier player moves.
-            for(int i = 0; i < 8; i++) {
-                adjacentFound = false;
-                currRow = row;
-                currCol = col;
-                direction: for(int j = 0; j < boardSquares.length - 1; j++) {
-                    //0 = north-west
-                    //1 = north
-                    //2 = north-east
-                    //3 = east
-                    //4 = south-east
-                    //5 = south
-                    //6 = south-west
-                    //7 = west
-                    switch(i) {
-                        case 0:
-                            currRow--;
-                            currCol--;
-                            if(currRow < 0 || currCol < 0) {
-                                break direction;
-                            } else {
-                                if(adjacentFound) {
-                                    if(boardSquares[currRow][currCol] == 1) {
-                                        return true;
-                                    }
-                                } else if(boardSquares[currRow][currCol] == 2) {
-                                    adjacentFound = true;
-                                } else {
-                                    break direction;
+        //For each direction search if there's opponent-pieces in between the move and earlier player moves.
+        for (int i = 0; i < 8; i++) {
+            adjacentFound = false;
+            currRow = row;
+            currCol = col;
+            direction:
+            for (int j = 0; j < boardSquares.length - 1; j++) {
+                //0 = north-west
+                //1 = north
+                //2 = north-east
+                //3 = east
+                //4 = south-east
+                //5 = south
+                //6 = south-west
+                //7 = west
+                switch (i) {
+                    case 0:
+                        currRow--;
+                        currCol--;
+
+                        //If we reach the edge we want to break out of the loop.
+                        if (currRow < 0 || currCol < 0) {
+                            break direction;
+                        } else {
+                            //If the next square was an oppnents piece
+                            if (adjacentFound) {
+                                //If we've found a square with our own piece
+                                if (boardSquares[currRow][currCol] == player) {
+                                    flipCheckers(piecesToFlip, player);
+                                    validMove = true;
+                                } else if(boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                    int[] position = new int[2];
+                                    position[0] = currRow;
+                                    position[1] = currCol;
+                                    piecesToFlip.add(position);
                                 }
-                            }
-                            break;
-                        case 1:
-                            currRow--;
-                            if(currRow < 0) {
-                                break direction;
+                                //If the next square is an opponents piece
+                            } else if (boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                piecesToFlip.clear();
+                                adjacentFound = true;
+                                int[] position = new int[2];
+                                position[0] = currRow;
+                                position[1] = currCol;
+                                piecesToFlip.add(position);
+                                //If the next square is our own piece or an empty space we know we can skip to check this direction.
                             } else {
-                                if(adjacentFound) {
-                                    if(boardSquares[currRow][currCol] == 1) {
-                                        return true;
-                                    }
-                                } else if(boardSquares[currRow][currCol] == 2) {
-                                    adjacentFound = true;
-                                } else {
-                                    break direction;
-                                }
-                            }
-                            break;
-                        case 2:
-                            currRow--;
-                            currCol++;
-                            if(currRow < 0 || currCol > boardSquares.length - 1) {
                                 break direction;
-                            } else {
-                                if(adjacentFound) {
-                                    if(boardSquares[currRow][currCol] == 1) {
-                                        return true;
-                                    }
-                                } else if(boardSquares[currRow][currCol] == 2) {
-                                    adjacentFound = true;
-                                } else {
-                                    break direction;
-                                }
                             }
-                            break;
-                        case 3:
-                            currCol++;
-                            if(currCol > boardSquares.length - 1) {
+                        }
+                        break;
+                    case 1:
+                        currRow--;
+                        if (currRow < 0) {
+                            break direction;
+                        } else {
+                            if (adjacentFound) {
+                                if (boardSquares[currRow][currCol] == player) {
+                                    flipCheckers(piecesToFlip, player);
+                                    validMove = true;
+                                } else if(boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                    int[] position = new int[2];
+                                    position[0] = currRow;
+                                    position[1] = currCol;
+                                    piecesToFlip.add(position);
+                                }
+                            } else if (boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                piecesToFlip.clear();
+                                adjacentFound = true;
+                                int[] position = new int[2];
+                                position[0] = currRow;
+                                position[1] = currCol;
+                                piecesToFlip.add(position);
+                            } else {
                                 break direction;
-                            } else {
-                                if(adjacentFound) {
-                                    if(boardSquares[currRow][currCol] == 1) {
-                                        return true;
-                                    }
-                                } else if(boardSquares[currRow][currCol] == 2) {
-                                    adjacentFound = true;
-                                } else {
-                                    break direction;
-                                }
                             }
-                            break;
-                        case 4:
-                            currRow++;
-                            currCol++;
-                            if(currRow > boardSquares.length - 1 || currCol> boardSquares.length - 1) {
+                        }
+                        break;
+                    case 2:
+                        currRow--;
+                        currCol++;
+                        if (currRow < 0 || currCol > boardSquares.length - 1) {
+                            break direction;
+                        } else {
+                            if (adjacentFound) {
+                                if (boardSquares[currRow][currCol] == player) {
+                                    flipCheckers(piecesToFlip, player);
+                                    validMove = true;
+                                } else if(boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                    int[] position = new int[2];
+                                    position[0] = currRow;
+                                    position[1] = currCol;
+                                    piecesToFlip.add(position);
+                                }
+                            } else if (boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                piecesToFlip.clear();
+                                adjacentFound = true;
+                                int[] position = new int[2];
+                                position[0] = currRow;
+                                position[1] = currCol;
+                                piecesToFlip.add(position);
+                            } else {
                                 break direction;
-                            } else {
-                                if(adjacentFound) {
-                                    if(boardSquares[currRow][currCol] == 1) {
-                                        return true;
-                                    }
-                                } else if(boardSquares[currRow][currCol] == 2) {
-                                    adjacentFound = true;
-                                } else {
-                                    break direction;
-                                }
                             }
-                            break;
-                        case 5:
-                            currRow++;
-                            if(currRow > boardSquares.length - 1) {
+                        }
+                        break;
+                    case 3:
+                        currCol++;
+                        if (currCol > boardSquares.length - 1) {
+                            break direction;
+                        } else {
+                            if (adjacentFound) {
+                                if (boardSquares[currRow][currCol] == player) {
+                                    flipCheckers(piecesToFlip, player);
+                                    validMove = true;
+                                } else if(boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                    int[] position = new int[2];
+                                    position[0] = currRow;
+                                    position[1] = currCol;
+                                    piecesToFlip.add(position);
+                                }
+                            } else if (boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                piecesToFlip.clear();
+                                adjacentFound = true;
+                                int[] position = new int[2];
+                                position[0] = currRow;
+                                position[1] = currCol;
+                                piecesToFlip.add(position);
+                            } else {
                                 break direction;
-                            } else {
-                                if(adjacentFound) {
-                                    if(boardSquares[currRow][currCol] == 1) {
-                                        return true;
-                                    }
-                                } else if(boardSquares[currRow][currCol] == 2) {
-                                    adjacentFound = true;
-                                } else {
-                                    break direction;
-                                }
                             }
-                            break;
-                        case 6:
-                            currRow++;
-                            currCol--;
-                            if(currRow > boardSquares.length - 1 || currCol < 0) {
+                        }
+                        break;
+                    case 4:
+                        currRow++;
+                        currCol++;
+                        if (currRow > boardSquares.length - 1 || currCol > boardSquares.length - 1) {
+                            break direction;
+                        } else {
+                            if (adjacentFound) {
+                                if (boardSquares[currRow][currCol] == player) {
+                                    flipCheckers(piecesToFlip, player);
+                                    validMove = true;
+                                } else if(boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                    int[] position = new int[2];
+                                    position[0] = currRow;
+                                    position[1] = currCol;
+                                    piecesToFlip.add(position);
+                                }
+                            } else if (boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                piecesToFlip.clear();
+                                adjacentFound = true;
+                                int[] position = new int[2];
+                                position[0] = currRow;
+                                position[1] = currCol;
+                                piecesToFlip.add(position);
+                            } else {
                                 break direction;
-                            } else {
-                                if(adjacentFound) {
-                                    if(boardSquares[currRow][currCol] == 1) {
-                                        return true;
-                                    }
-                                } else if(boardSquares[currRow][currCol] == 2) {
-                                    adjacentFound = true;
-                                } else {
-                                    break direction;
-                                }
                             }
-                            break;
-                        case 7:
-                            currCol--;
-                            if(currCol < 0) {
+                        }
+                        break;
+                    case 5:
+                        currRow++;
+                        if (currRow > boardSquares.length - 1) {
+                            break direction;
+                        } else {
+                            if (adjacentFound) {
+                                if (boardSquares[currRow][currCol] == player) {
+                                    flipCheckers(piecesToFlip, player);
+                                    validMove = true;
+                                } else if(boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                    int[] position = new int[2];
+                                    position[0] = currRow;
+                                    position[1] = currCol;
+                                    piecesToFlip.add(position);
+                                }
+                            } else if (boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                piecesToFlip.clear();
+                                adjacentFound = true;
+                                int[] position = new int[2];
+                                position[0] = currRow;
+                                position[1] = currCol;
+                                piecesToFlip.add(position);
+                            } else {
                                 break direction;
-                            } else {
-                                if(adjacentFound) {
-                                    if(boardSquares[currRow][currCol] == 1) {
-                                        return true;
-                                    }
-                                } else if(boardSquares[currRow][currCol] == 2) {
-                                    adjacentFound = true;
-                                } else {
-                                    break direction;
-                                }
                             }
-                            break;
-                        default:
-                            System.out.println("[ERR]: Unknown direction chosen in the validation of the move.");
-                    }
+                        }
+                        break;
+                    case 6:
+                        currRow++;
+                        currCol--;
+                        if (currRow > boardSquares.length - 1 || currCol < 0) {
+                            break direction;
+                        } else {
+                            if (adjacentFound) {
+                                if (boardSquares[currRow][currCol] == player) {
+                                    flipCheckers(piecesToFlip, player);
+                                    validMove = true;
+                                } else if(boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                    int[] position = new int[2];
+                                    position[0] = currRow;
+                                    position[1] = currCol;
+                                    piecesToFlip.add(position);
+                                }
+                            } else if (boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                piecesToFlip.clear();
+                                adjacentFound = true;
+                                int[] position = new int[2];
+                                position[0] = currRow;
+                                position[1] = currCol;
+                                piecesToFlip.add(position);
+                            } else {
+                                break direction;
+                            }
+                        }
+                        break;
+                    case 7:
+                        currCol--;
+                        if (currCol < 0) {
+                            break direction;
+                        } else {
+                            if (adjacentFound) {
+                                if (boardSquares[currRow][currCol] == player) {
+                                    flipCheckers(piecesToFlip, player);
+                                    validMove = true;
+                                } else if(boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                    int[] position = new int[2];
+                                    position[0] = currRow;
+                                    position[1] = currCol;
+                                    piecesToFlip.add(position);
+                                }
+                            } else if (boardSquares[currRow][currCol] != 0 || boardSquares[currRow][currCol] != player) {
+                                piecesToFlip.clear();
+                                adjacentFound = true;
+                                int[] position = new int[2];
+                                position[0] = currRow;
+                                position[1] = currCol;
+                                piecesToFlip.add(position);
+                            } else {
+                                break direction;
+                            }
+                        }
+                        break;
+                    default:
+                        System.out.println("[ERR]: Unknown direction chosen in the validation of the move.");
                 }
             }
-
-        } else {
-            //O
-
         }
-        return false;
+        return validMove;
     }
 
 }
