@@ -12,6 +12,7 @@ public class Board {
     private int[][] boardSquares;
     private int[][] boardSquarePositions;
     private int depth;
+    private int nodes;
     private HashMap<int[][], State> states;
     private StringBuilder boardView;
     private Scanner scanner;
@@ -88,6 +89,13 @@ public class Board {
             }
         }
         System.out.println(boardView);
+    }
+
+    /**
+     * Prints out the nodes and depth of the last search made.
+     */
+    public void printDepthAndNodes() {
+        System.out.println("Depth of search: " + depth + "\nNodes examined: " + nodes);
     }
 
     /**
@@ -227,11 +235,12 @@ public class Board {
      * @return Returns the best choice the AI can make from the calculations.
      */
     public Action alphaBetaSearch(State state) {
+        depth = 0;
+        nodes = 0;
         state = getAvailableMoves(state.getBoardSquares(), 2);
         int v = maxValue(state, Integer.MIN_VALUE, Integer.MAX_VALUE);
         state = states.get(state.getBoardSquares());
         states.clear();
-        depth = 0;
         return state.getActionWithValue(v); //Get the action with the value v and return it.
     }
 
@@ -256,9 +265,13 @@ public class Board {
         state = getAvailableMoves(state.getBoardSquares(), 2);
         states.put(state.getBoardSquares(), state);
         ArrayList<Action> actions = state.getActions();
+        depth++;
 
         for(Action action : actions) {
-            depth++;
+            nodes++;
+
+            //Min function has to be able to see if the actions result has any actions.
+            action.setState(getAvailableMoves(action.getState().getBoardSquares(), 2));
             v = Math.max(v, minValue(action.getState(), a, b));
             if(v >= b) {
                 action.getState().setValue(v);
@@ -291,9 +304,13 @@ public class Board {
         state = getAvailableMoves(state.getBoardSquares(), 1);
         states.put(state.getBoardSquares(), state); // Add the state with its actions to the map.
         ArrayList<Action> actions = state.getActions();
+        depth++;
 
         for(Action action : actions) {
-            depth++;
+            nodes++;
+
+            action.setState(getAvailableMoves(action.getState().getBoardSquares(), 1));
+
             v = Math.min(v, maxValue(action.getState(), a, b));
             if(v <= a) {
                 action.getState().setValue(v);

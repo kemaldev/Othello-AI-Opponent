@@ -31,6 +31,7 @@ public class Main {
             System.out.println("The computer choses the following move:");
             board.aiMove();
             board.printBoard();
+            board.printDepthAndNodes();
 
             player = 1;
         }
