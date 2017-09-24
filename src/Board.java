@@ -3,6 +3,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
 
+/**
+ * The board of the game and its rules.
+ */
+
 public class Board {
 
     private int[][] boardSquares;
@@ -12,6 +16,9 @@ public class Board {
     private StringBuilder boardView;
     private Scanner scanner;
 
+    /**
+     * Constructor which initializes all the needed variables, positions and pieces on the board.
+     */
     public Board() {
 
         scanner = new Scanner(System.in);
@@ -21,10 +28,10 @@ public class Board {
         // 1 = 'X', 2 = 'O' , 0 = Empty square
         boardSquares = new int[4][4];
 
-        boardSquares[1][1] = 1;
-        boardSquares[2][2] = 1;
-        boardSquares[1][2] = 2;
-        boardSquares[2][1] = 2;
+        boardSquares[1][1] = 2;
+        boardSquares[2][2] = 2;
+        boardSquares[1][2] = 1;
+        boardSquares[2][1] = 1;
 
         //Setting up all of the board-squares positions.
         boardSquarePositions = new int[4][4];
@@ -65,12 +72,11 @@ public class Board {
                         "|          |          |          |          |\n" +
                         "---------------------------------------------");
 
-
-        Action action = alphaBetaSearch(new State(boardSquares));
-        System.out.println(action.getRow() + ", " + action.getCol());
-
     }
 
+    /**
+     * Method that prints out the current state of the board.
+     */
     public void printBoard() {
         for (int i = 0; i < boardSquares.length; i++) {
             for (int j = 0; j < boardSquares[i].length; j++) {
@@ -84,6 +90,9 @@ public class Board {
         System.out.println(boardView);
     }
 
+    /**
+     * Method that makes a move for the player.
+     */
     public void makeMove() {
         System.out.println("Make a move: ");
         String rowAndColumnText = scanner.nextLine();
@@ -107,14 +116,34 @@ public class Board {
         }
     }
 
+    /**
+     * Method that makes a move for the AI.
+     */
+    public void aiMove() {
+        Action action = alphaBetaSearch(new State(boardSquares));
+        if(validMove(action.getRow(), action.getCol(), 2, boardSquares)) {
+            boardSquares[action.getRow()][action.getCol()] = 2;
+        }
+    }
 
-
+    /**
+     * Method that flips the pieces on the board if it should.
+     * @param rowsAndCols The rows and columns.
+     * @param player The player that's currently going to make a move.
+     * @param boardToFlip The board we're going to flip pieces on.
+     */
     public void flipCheckers(ArrayList<int[]> rowsAndCols, int player, int[][] boardToFlip) {
         for(int[] position : rowsAndCols) {
             boardToFlip[position[0]][position[1]] = player;
         }
     }
 
+    /**
+     * Method that gets the available moves from the current state.
+     * @param boardState The current state we're going to calculate the available moves from.
+     * @param player The player that's supposed to make a move.
+     * @return
+     */
     public State getAvailableMoves(int[][] boardState, int player) {
         State state = new State(boardState);
         for (int i = 0; i < boardState.length; i++) {
@@ -135,12 +164,56 @@ public class Board {
         return state;
     }
 
+    /**
+     * Method that decides whether the game is over or not.
+     * @param player The current player that's supposed to make a move.
+     * @return
+     */
+    public boolean gameOver(int player) {
+        State state = getAvailableMoves(boardSquares, player);
+        return terminalTest(state);
+    }
 
+    /**
+     * If a player has won the game return a string with the player that won and his score.
+     * @return
+     */
+    public String playerWon() {
+        int player = 0;
+        int computer = 0;
+        for(int i = 0; i < boardSquares.length; i++) {
+            for(int j = 0; j < boardSquares[i].length; j++) {
+                if(boardSquares[i][j] == 1) {
+                    player++;
+                } else if(boardSquares[i][j] != player && boardSquares[i][j] != 0) {
+                    computer++;
+                }
+            }
+        }
+
+        if(player > computer) {
+            return "Congratulations, you won with the score " + player + " - " + computer + "!";
+        }
+
+        return "Sorry, but the computer beat you this time with the score " + computer + " - " + player + "!";
+    }
+
+    /**
+     * Tests whether we're in a terminal node or not.
+     * @param state The current state we're testing.
+     * @return
+     */
     public boolean terminalTest(State state) {
+        if(state.getActions() != null){
+            if(state.getActions().size() == 0) {
+                return true;
+            }
+        }
+
         for(int i = 0; i < state.boardSquares.length; i++) {
             for(int j = 0; j < state.boardSquares[i].length; j++) {
                 if(state.boardSquares[i][j] == 0) {
-                    return false; //As long as there's spots free it's not a terminal node.
+                    return false; //As long as there's spots free and there are actions left it's not a terminal node.
                 }
             }
         }
@@ -148,7 +221,13 @@ public class Board {
         return true;
     }
 
+    /**
+     * The alpha-beta pruning search algorithm.
+     * @param state From where we should start searching in the game tree.
+     * @return Returns the best choice the AI can make from the calculations.
+     */
     public Action alphaBetaSearch(State state) {
+        state = getAvailableMoves(state.getBoardSquares(), 2);
         int v = maxValue(state, Integer.MIN_VALUE, Integer.MAX_VALUE);
         state = states.get(state.getBoardSquares());
         states.clear();
@@ -156,13 +235,20 @@ public class Board {
         return state.getActionWithValue(v); //Get the action with the value v and return it.
     }
 
+    /**
+     * Method that is part of the alpha-beta pruning search algorithm, recursive together with the minValue().
+     * @param state The current state
+     * @param a The alpha value
+     * @param b The beta value
+     * @return
+     */
     public int maxValue(State state, int a, int b) {
         //If we're at a leaf-node, a.k.a. winning/losing state.
         if(terminalTest(state) || depth > 30) {
             int utility = state.calcUtility(2);
             state.setValue(utility);
             states.put(state.getBoardSquares(), state);
-            return utility; //Calculate the utility for the state.   --    //2 here is the computer
+            return utility;
         }
 
         int v = Integer.MIN_VALUE;
@@ -186,12 +272,19 @@ public class Board {
         return v;
     }
 
+    /**
+     * Method that is part of the alpha-beta pruning search algorithm, recursive together with the maxValue().
+     * @param state The current state
+     * @param a The alpha value
+     * @param b The beta value
+     * @return
+     */
     public int minValue(State state, int a, int b) {
         if(terminalTest(state) || depth > 30) {
             int utility = state.calcUtility(2);
             state.setValue(utility);
             states.put(state.getBoardSquares(), state);
-            return utility; //Calculate the utility for the state.   --    //2 here is the computer
+            return utility;
         }
         int v = Integer.MAX_VALUE;
 
@@ -201,7 +294,7 @@ public class Board {
 
         for(Action action : actions) {
             depth++;
-            v = Math.min(v, maxValue(action.getState(), a, b)); //What does RESULT(s,a) mean on this line????
+            v = Math.min(v, maxValue(action.getState(), a, b));
             if(v <= a) {
                 action.getState().setValue(v);
                 states.put(action.getState().getBoardSquares(), action.getState());
@@ -215,6 +308,14 @@ public class Board {
         return v;
     }
 
+    /**
+     * A method that returns whether a move is valid or not and flips the pieces that should be flipped if it's true.
+     * @param row The row we're checking.
+     * @param col The column we're checking.
+     * @param player The current player that's supposed to make a move.
+     * @param board The board we're looking at.
+     * @return Returns whether the move is valid or not.
+     */
     public boolean validMove(int row, int col, int player, int[][] board) {
         //If the spot has already been occupied.
         if (boardSquares[row][col] != 0) {

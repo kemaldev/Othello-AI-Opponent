@@ -1,3 +1,6 @@
+/**
+ * The main class that runs the actual game.
+ */
 public class Main {
 
     public static void main(String[] args) {
@@ -9,9 +12,31 @@ public class Main {
                 "I want to place the piece in the upper left corner, I write: 0,0 in the console window. The square right of that is 0,1 etc." );
         board.printBoard();
 
-        board.makeMove();
+        int player = 1;
+        while(true) {
+            if(board.gameOver(player))
+                break;
+            board.makeMove();
+            board.printBoard();
 
-        board.printBoard();
+            player = 2;
+            if(board.gameOver(player))
+                break;
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("The computer choses the following move:");
+            board.aiMove();
+            board.printBoard();
+
+            player = 1;
+        }
+
+        System.out.println("Game over!" + "\n");
+        System.out.println(board.playerWon());
 
     }
 }
